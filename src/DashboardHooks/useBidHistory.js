@@ -40,14 +40,12 @@ const useBidHistory = () => {
       // Convert date format for Firestore
       const formattedDate = formatDateToFirestore(filterDate);
 
-     
-
       const bidsData = await bidHistoryService.getAllBids(
         formattedDate,
         filterGame || null,
         filterType || null
       );
-  
+
       setFilteredBids(bidsData);
       setIsSearched(true);
 
@@ -61,6 +59,16 @@ const useBidHistory = () => {
       console.error("Error fetching bids:", err.message);
       setIsSearched(true);
     }
+  };
+
+  const clearFilters = () => {
+    setFilterDate("");
+    setFilterGame("");
+    setFilterType("");
+    setFilteredBids([]);
+    setIsSearched(false);
+    setEditingBidId(null);
+    setEditedBids({});
   };
 
   const handleEditToggle = async (docId) => {
@@ -108,7 +116,15 @@ const useBidHistory = () => {
       ...prev,
       [docId]: {
         ...prev[docId],
-        [field]: value,
+        [field]:
+          field === "bidAmount" ||
+          field === "bidDigit" ||
+          field === "panaDigit" ||
+          field === "singleDigit" ||
+          field === "closePana" ||
+          field === "openPana"
+            ? parseFloat(value) || 0
+            : value,
       },
     }));
   };
@@ -155,6 +171,7 @@ const useBidHistory = () => {
     deleteBid,
     loading,
     isSearched,
+    clearFilters,
   };
 };
 

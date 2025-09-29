@@ -74,7 +74,6 @@ export const getWithdrawRequestsByUser = async (userId, fromDate = null, toDate 
       });
     }
 
-    // Log for debugging
     return requests;
   } catch (err) {
     console.error("Error fetching withdraw requests:", err.message);
@@ -101,7 +100,6 @@ export const getAddRequestsByUser = async (userId, date = null) => {
       });
     }
 
-    // Log for debugging
     return requests;
   } catch (err) {
     console.error("Error fetching add fund requests:", err.message);

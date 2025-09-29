@@ -152,7 +152,7 @@ const UserDetail = () => {
             <option value="Single Ank">Single Ank</option>
             <option value="Jodi">Jodi</option>
             <option value="Single Pana">Single Pana</option>
-            <option value="DoublePana">DoublePana</option>
+            <option value="Double Pana">Double Pana</option>
             <option value="Triple Pana">Triple Pana</option>
             <option value="Half Sangam">Half Sangam</option>
             <option value="Full Sangam">Full Sangam</option>

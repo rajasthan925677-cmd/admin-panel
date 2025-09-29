@@ -1,8 +1,8 @@
-import { db } from "../firebase"; // Adjust path to your Firebase config
+import { db } from "../firebase";
 import { collection, query, where, getDocs, doc, updateDoc, increment } from "firebase/firestore";
 import { format } from "date-fns";
 
-const fetchQRPayRequests = async (date, status, userId) => {
+const fetchQRPayRequests = async (date, status, mobile) => {
   try {
     let q = query(collection(db, "QRpayRequest"));
 
@@ -11,25 +11,32 @@ const fetchQRPayRequests = async (date, status, userId) => {
       q = query(q, where("requestStatus", "==", status));
     }
 
-    // Apply userId filter (Firestore)
-    if (userId) {
-      q = query(q, where("userId", "==", userId));
+    // Apply mobile filter (Firestore)
+    if (mobile) {
+      if (!/^\d{10}$/.test(mobile)) {
+        console.warn("Invalid mobile format:", mobile);
+        return [];
+      }
+      q = query(q, where("mobile", "==", mobile));
     }
 
+    // Apply date filter (Firestore)
+    if (date) {
+      const formattedDate = format(date, "dd/MM/yyyy");
+      q = query(q, where("paymentDate", "==", formattedDate));
+    }
+
+   // console.log("Firestore query conditions:", { status, mobile, date: date ? format(date, "dd/MM/yyyy") : null });
     const snapshot = await getDocs(q);
-    let requests = snapshot.docs.map((doc) => ({
+    const requests = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
 
-    // Apply date filter (client-side)
-    if (date) {
-      const formattedDate = format(date, "dd/MM/yyyy"); // e.g., "12/09/2025"
-      requests = requests.filter(req => req.paymentDateTime.startsWith(formattedDate));
-    }
-
+    //console.log("Firestore query results:", requests.map(r => ({ id: r.id, mobile: r.mobile, paymentDate: r.paymentDate })));
     return requests;
   } catch (error) {
+    console.error("Error fetching QR Pay Requests:", error);
     throw new Error("Error fetching QR Pay Requests: " + error.message);
   }
 };
@@ -45,19 +52,7 @@ const updateQRPayRequestStatus = async (requestId, status) => {
 
 const updateUserBalance = async (userId, amount) => {
   try {
-    // Query users collection to find document where mobile field matches userId
-    const usersQuery = query(collection(db, "users"), where("mobile", "==", userId));
-    const querySnapshot = await getDocs(usersQuery);
-
-    if (querySnapshot.empty) {
-      throw new Error(`No user found with mobile: ${userId}`);
-    }
-
-    // Assume single user match (mobile should be unique)
-    const userDoc = querySnapshot.docs[0];
-    const userRef = doc(db, "users", userDoc.id);
-
-    // Update balance
+    const userRef = doc(db, "users", userId);
     await updateDoc(userRef, {
       balance: increment(amount),
     });

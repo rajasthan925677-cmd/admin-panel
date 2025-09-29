@@ -1,16 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-// ✅ ResetResult hook import karo (abhi placeholder hai, baad me implement karenge)
 import useResetResult from "./ResetResult";
+import AdminForm from "../components/AdminForm"; // Naya component import
 
 const SideBar = ({ setActiveCard }) => {
   const navigate = useNavigate();
-
-  // ✅ Hook ka use
   const { resetResults } = useResetResult();
+  const [showAdminForm, setShowAdminForm] = useState(false); // State for form toggle
 
-  // ✅ Button click handler
   const handleResetClick = () => {
     if (window.confirm("Are you sure you want to reset all game results?")) {
       resetResults();
@@ -26,26 +23,24 @@ const SideBar = ({ setActiveCard }) => {
       <button style={styles.sidebarBtn} onClick={() => setActiveCard("games")}>
         Games Management
       </button>
-      <button style={styles.sidebarBtn}>Wallet Management</button>
+      <button style={styles.sidebarBtn} onClick={() => setShowAdminForm(true)}>
+        Admins
+      </button>
       <button style={styles.sidebarBtn} onClick={() => setActiveCard("addFundRequests")}>
         Add Request Management
       </button>
-      <button style={styles.sidebarBtn} onClick={() => setActiveCard("withdrawRequests")}>
+      <button style={styles.sidebarBtn} onClick={() => navigate("/withdraw-requests")}>
         Withdraw Requests Management
       </button>
       <button style={styles.sidebarBtn} onClick={() => navigate("/declare-result")}>
         Declare Result
       </button>
-
-
-      {/* ✅ Naya Reset Results Button */}
       <button style={styles.sidebarBtn} onClick={handleResetClick}>
         Reset Results
       </button>
-
-
-
-
+      <button style={styles.sidebarBtn} onClick={() => navigate("/reset-user-password")}>
+        Reset User Password
+      </button>
       <button style={styles.sidebarBtn} onClick={() => setActiveCard("bidHistory")}>
         Bid History
       </button>
@@ -61,7 +56,7 @@ const SideBar = ({ setActiveCard }) => {
       <button style={styles.sidebarBtn} onClick={() => navigate("/download-users")}>
         Download Users Excel
       </button>
-
+      {showAdminForm && <AdminForm onClose={() => setShowAdminForm(false)} />} {/* Form show */}
     </div>
   );
 };

@@ -44,12 +44,11 @@ const useWinHistory = () => {
 
   const fetchData = useCallback(async () => {
     try {
-  
       const gamesData = await Promise.race([
         gameService.getGames(),
         new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout fetching games")), 5000)),
       ]);
-           setGames(gamesData || []);
+      setGames(gamesData || []);
     } catch (err) {
       console.error("Error fetching games:", err.message);
       setGames([]);
@@ -61,10 +60,8 @@ const useWinHistory = () => {
   const fetchTotalWinAmount = useCallback(async () => {
     try {
       const currentDate = getCurrentServerDate();
-     
       const winBidsData = await winHistoryService.getWinBids(currentDate, null, null);
       const total = winBidsData.reduce((sum, bid) => sum + (Number(bid.payoutAmount) || 0), 0);
-      
       setTotalWinAmount(total);
     } catch (err) {
       console.error("Error fetching total win amount:", err.message);
@@ -77,13 +74,11 @@ const useWinHistory = () => {
   const handleSearch = async () => {
     try {
       const formattedDate = formatDateToFirestore(filterDate);
-     
       const winBidsData = await winHistoryService.getWinBids(
         formattedDate,
         filterGame || null,
         filterType || null
       );
-    
       setFilteredWinBids(winBidsData);
       setIsSearched(true);
       const editState = {};
@@ -96,6 +91,16 @@ const useWinHistory = () => {
       setIsSearched(true);
       setFilteredWinBids([]);
     }
+  };
+
+  const clearFilters = () => {
+    setFilterDate("");
+    setFilterGame("");
+    setFilterType("");
+    setFilteredWinBids([]);
+    setIsSearched(false);
+    setEditingBidId(null);
+    setEditedBids({});
   };
 
   const handleEditToggle = async (docId) => {
@@ -184,6 +189,7 @@ const useWinHistory = () => {
     filterType,
     setFilterType,
     handleSearch,
+    clearFilters,
     handleEditToggle,
     handleBidChange,
     deleteBid,

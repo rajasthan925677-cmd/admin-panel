@@ -1,3 +1,4 @@
+// UsersService.js
 import { db } from "../firebase";
 import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from "firebase/firestore";
 
@@ -9,12 +10,18 @@ export const getUsers = async () => {
 };
 
 export const getUserByMobile = async (mobile) => {
-  const q = query(usersCol, where("mobile", "==", mobile));
-  const snapshot = await getDocs(q);
-  if (snapshot.docs.length > 0) {
-    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
-  } else {
-    return null;
+  try {
+    const q = query(usersCol, where("mobile", "==", mobile));
+    const snapshot = await getDocs(q);
+    if (snapshot.docs.length > 0) {
+      const userDoc = snapshot.docs[0];
+      return { id: userDoc.id, ...userDoc.data(), uid: userDoc.id }; // Fixed: doc.data() to userDoc.data()
+    } else {
+      return null;
+    }
+  } catch (err) {
+    console.error("Error fetching user by mobile:", err.message);
+    throw err;
   }
 };
 

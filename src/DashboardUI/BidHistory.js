@@ -20,6 +20,7 @@ const BidHistory = () => {
     deleteBid,
     loading,
     isSearched,
+    clearFilters,
   } = useBidHistory();
 
   if (loading) return <div>Loading...</div>;
@@ -66,13 +67,16 @@ const BidHistory = () => {
             <option value="Single Ank">Single Ank</option>
             <option value="Jodi">Jodi</option>
             <option value="Single Pana">Single Pana</option>
-            <option value="DoublePana">DoublePana</option>
+            <option value="Double Pana">Double Pana</option>
             <option value="Triple Pana">Triple Pana</option>
             <option value="Half Sangam">Half Sangam</option>
             <option value="Full Sangam">Full Sangam</option>
           </select>
           <button onClick={handleSearch} style={styles.searchBtn}>
             Search
+          </button>
+          <button onClick={clearFilters} style={styles.clearBtn}>
+            Clear
           </button>
         </div>
 
@@ -104,10 +108,10 @@ const BidHistory = () => {
                   <tr key={bid.docId} style={styles.bidRow}>
                     <td style={styles.bidCell}>
                       <Link
-                        to={`/user-detail/${bid.userId}`}
+                        to={`/user-detail/${bid.mobile}`}
                         style={{ color: "#00a8ff", textDecoration: "underline" }}
                       >
-                        {bid.userId}
+                        {bid.mobile || "Unknown"}
                       </Link>
                     </td>
                     <td style={styles.bidCell}>
@@ -311,6 +315,14 @@ const styles = {
   },
   searchBtn: {
     backgroundColor: "#00a8ff",
+    color: "#fff",
+    border: "none",
+    padding: "6px 12px",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+  clearBtn: {
+    backgroundColor: "#e84118",
     color: "#fff",
     border: "none",
     padding: "6px 12px",

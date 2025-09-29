@@ -7,7 +7,7 @@ import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
 function ResultDeclare() {
-  const { declareResult } = useDeclareResult();
+  const { declareResult, isLoading, resultMessage } = useDeclareResult();
   const navigate = useNavigate();
 
   const [gameName, setGameName] = useState('');
@@ -16,7 +16,7 @@ function ResultDeclare() {
   const [resultValue, setResultValue] = useState('');
   const [games, setGames] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [error, setError] = useState(''); // Added for validation
+  const [error, setError] = useState('');
 
   // Fetch game names from Firestore
   useEffect(() => {
@@ -33,7 +33,7 @@ function ResultDeclare() {
     fetchGames();
   }, []);
 
-  // Handle date change and format to "DD MMM YYYY" (e.g., "10 Sep 2025")
+  // Handle date change and format to "DD MMM YYYY"
   const handleDateChange = (date) => {
     setSelectedDate(date);
     if (date) {
@@ -62,7 +62,7 @@ function ResultDeclare() {
       return;
     }
     setError('');
-    await declareResult(gameName, resultType, resultDate, resultValue); // Pass as string
+    await declareResult(gameName, resultType, resultDate, resultValue);
   };
 
   const styles = {
@@ -136,17 +136,33 @@ function ResultDeclare() {
       padding: '10px',
       border: 'none',
       borderRadius: '6px',
-      background: '#66dfefff',
+      background: isLoading ? '#ccc' : '#66dfefff',
       color: 'white',
       fontWeight: '600',
       fontSize: '16px',
-      cursor: 'pointer',
+      cursor: isLoading ? 'not-allowed' : 'pointer',
       transition: 'background 0.2s ease',
     },
     error: {
       color: 'red',
       fontSize: '14px',
       textAlign: 'center',
+    },
+    resultMessage: {
+      fontSize: '16px',
+      textAlign: 'center',
+      marginTop: '20px',
+      color: resultMessage.includes('failed') ? 'red' : 'green',
+      fontWeight: '500',
+    },
+    spinner: {
+      border: '4px solid #f3f3f3',
+      borderTop: '4px solid #3498db',
+      borderRadius: '50%',
+      width: '24px',
+      height: '24px',
+      animation: 'spin 1s linear infinite',
+      margin: '10px auto',
     },
   };
 
@@ -242,10 +258,24 @@ function ResultDeclare() {
           </div>
 
           {/* Submit Button */}
-          <button type="submit" style={styles.submitButton}>
-            Declare Result
+          <button type="submit" style={styles.submitButton} disabled={isLoading}>
+            {isLoading ? 'Processing...' : 'Declare Result'}
           </button>
         </form>
+
+        {/* Result Message */}
+        {isLoading && <div style={styles.spinner}></div>}
+        {resultMessage && <div style={styles.resultMessage}>{resultMessage}</div>}
+
+        {/* Inline CSS for spinner animation */}
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}
+        </style>
       </div>
     </div>
   );

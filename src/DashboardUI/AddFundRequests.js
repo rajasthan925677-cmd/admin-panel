@@ -30,7 +30,7 @@ const AddFundRequests = () => {
           where("requestStatus", "==", "accepted")
         ); // Only status filter, no date range
         const snapshot = await getDocs(q);
-        const today = format(new Date(), "dd-MM-yyyy"); // e.g., "12-09-2025"
+        const today = format(new Date(), "dd/MM/yyyy"); // Matches Firestore format
         const acceptedToday = snapshot.docs
           .map(doc => doc.data())
           .filter(req => req.paymentDate === today)
@@ -110,10 +110,11 @@ const AddFundRequests = () => {
           <div style={{ display: "flex", alignItems: "center" }}>
             <input
               type="text"
-              placeholder="Search by User ID"
-              value={filterValues.userId || ""}
-              onChange={(e) => setFilterValues((prev) => ({ ...prev, userId: e.target.value }))}
-              style={{ ...styles.filterInput, marginRight: 46  }}
+              inputMode="numeric"
+              placeholder="Search by Mobile Number"
+              value={filterValues.mobile || ""}
+              onChange={(e) => setFilterValues((prev) => ({ ...prev, mobile: e.target.value }))}
+              style={{ ...styles.filterInput, marginRight: 46 }}
             />
             <button onClick={applyFilters} title="Search" style={styles.iconBtn}>
               search
@@ -122,7 +123,7 @@ const AddFundRequests = () => {
           <button onClick={clearFilters} style={styles.clearBtn}>
             Clear
           </button>
-          <div style={{ fontSize: "28px", fontWeight: "600", color: "#ec0dd6ff" }}>
+          <div style={{ fontSize: "28px", fontWeight: "600", color: "#090909ff" }}>
             Total Add Fund TODAY: ₹{totalAddFundToday.toFixed(2)}
           </div>
         </div>
@@ -151,7 +152,7 @@ const AddFundRequests = () => {
             return (
               <div key={req.id} style={styles.card}>
                 <p>
-                  <strong>User:</strong> {req.userId}
+                  <strong>User:</strong> {req.mobile}
                 </p>
                 <p>
                   <strong>Amount:</strong> ₹ {req.amount}

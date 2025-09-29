@@ -6,13 +6,13 @@ const useAddFundRequests = () => {
   const [requests, setRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
 
-  const [filterValues, setFilterValues] = useState({ date: "", requestStatus: "", userId: "" });
-  const [appliedFilters, setAppliedFilters] = useState({ date: "", requestStatus: "", userId: "" });
+  const [filterValues, setFilterValues] = useState({ date: "", requestStatus: "", mobile: "" });
+  const [appliedFilters, setAppliedFilters] = useState({ date: "", requestStatus: "", mobile: "" });
 
   const formatDateForQuery = (dateStr) => {
     if (!dateStr) return "";
     const [year, month, day] = dateStr.split("-");
-    return `${day}-${month}-${year}`;
+    return `${day}/${month}/${year}`;
   };
 
   const fetchRequests = useCallback(async (filters) => {
@@ -21,7 +21,7 @@ const useAddFundRequests = () => {
       const colRef = collection(db, "add_requests");
       const constraints = [];
 
-      if (filters.userId) constraints.push(where("userId", "==", filters.userId));
+      if (filters.mobile) constraints.push(where("mobile", "==", filters.mobile));
       if (filters.requestStatus) constraints.push(where("requestStatus", "==", filters.requestStatus));
       if (filters.date) constraints.push(where("paymentDate", "==", filters.date));
 
@@ -45,7 +45,7 @@ const useAddFundRequests = () => {
   };
 
   const clearFilters = () => {
-    const cleared = { date: "", requestStatus: "", userId: "" };
+    const cleared = { date: "", requestStatus: "", mobile: "" };
     setFilterValues(cleared);
     setAppliedFilters(cleared);
     fetchRequests(cleared); // Pass cleared filters immediately

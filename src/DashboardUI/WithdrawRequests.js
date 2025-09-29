@@ -1,4 +1,3 @@
-// src/DashboardUI/WithdrawRequests.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
@@ -34,7 +33,7 @@ const WithdrawRequests = () => {
           where("requestStatus", "==", "accepted")
         );
         const snapshot = await getDocs(q);
-        const today = format(new Date(), "dd-MM-yyyy"); // e.g., "12-09-2025"
+        const today = format(new Date(), "dd/MM/yyyy"); // Matches Firestore format
         const acceptedToday = snapshot.docs
           .map(doc => doc.data())
           .filter(req => req.requestDate === today)
@@ -114,14 +113,14 @@ const WithdrawRequests = () => {
             <option value="rejected">Rejected</option>
           </select>
 
-          {/* UserId input + search button */}
+          {/* Mobile input + search button */}
           <div style={{ display: "flex", alignItems: "center" }}>
             <input
               type="text"
               inputMode="numeric"
-              placeholder="Search by User ID"
-              value={filterValues.userId}
-              onChange={(e) => setFilterValues((prev) => ({ ...prev, userId: e.target.value }))}
+              placeholder="Search by Mobile Number"
+              value={filterValues.mobile}
+              onChange={(e) => setFilterValues((prev) => ({ ...prev, mobile: e.target.value }))}
               style={{ ...styles.filterInput, marginRight: 6 }}
             />
             <button onClick={applyFilters} title="Search" style={styles.iconBtn}>search</button>
@@ -131,7 +130,7 @@ const WithdrawRequests = () => {
           <button onClick={clearFilters} style={styles.clearBtn}>Clear</button>
 
           {/* Total Withdraw Today */}
-          <div style={{ fontSize: "28px", fontWeight: "600", color: "#8c0808ff" }}>
+          <div style={{ fontSize: "28px", fontWeight: "600", color: "#fdfbfbff" }}>
              Approved Withdraw Today: ₹{totalWithdrawToday.toFixed(2)}
           </div>
         </div>
@@ -160,10 +159,10 @@ const WithdrawRequests = () => {
 
             return (
               <div key={req.id} style={styles.card}>
-                <p><strong>User:</strong> {req.userId}</p>
+                <p><strong>User:</strong> {req.mobile}</p>
                 <p><strong>Amount:</strong> ₹ {req.amount}</p>
                 <p><strong>Date:</strong> {req.requestDate} </p>
-                 <p><strong>Time:</strong> {req.paymentTime} </p>
+                <p><strong>Time:</strong> {req.paymentTime} </p>
                 <p><strong>UPI Id:</strong> {req.upiId}</p>
                 <p><strong>Request Status:</strong> <span style={{ textTransform: "capitalize" }}>{req.requestStatus}</span></p>
 
@@ -224,14 +223,14 @@ const styles = {
     padding: "8px 10px",
     borderRadius: "6px",
     border: "1px solid #4539d0ff",
-    background: "#3ed03bff",
+    background: "#4bbdf2ff",
     cursor: "pointer",
   },
   clearBtn: {
     padding: "8px 10px",
     borderRadius: "6px",
     border: "1px solid #c61919ff",
-    background: "#bbcf3cff",
+    background: "#ed1d1dff",
     cursor: "pointer",
   },
 };

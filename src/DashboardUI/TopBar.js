@@ -15,7 +15,7 @@ const TopBar = ({ showSidebar, setShowSidebar, showAdminUPI, setShowAdminUPI, ha
           style={{ marginRight: "15px", cursor: "pointer", color: "#d52196ff", fontWeight: "bold" }}
           onClick={() => setShowAdminUPI(!showAdminUPI)}
         >
-          Admin Profile
+          Admin   UPI
         </div>
         <div style={{ cursor: "pointer", color: "#e84118", fontWeight: "bold", marginRight: "30px" }} onClick={handleLogout}>
           ⚙️ Log Out

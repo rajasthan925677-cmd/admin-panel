@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 import useQRpayRequest from "../DashboardHooks/useQRpayRequest";
 import { format } from "date-fns";
-import { db } from "../firebase"; // Adjust path to your Firebase config
+import { db } from "../firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 
 const QRpayRequest = () => {
@@ -13,32 +13,33 @@ const QRpayRequest = () => {
     setDate,
     status,
     setStatus,
-    userId,
-    setUserId,
+    mobile,
+    setMobile,
     requests,
     loading,
     error,
     handleSearch,
     handleAccept,
     handleReject,
+    clearFilters,
   } = useQRpayRequest();
 
   const [totalApprovedToday, setTotalApprovedToday] = useState(0);
   const [fetchError, setFetchError] = useState(null);
 
-  // Fetch total approved amount for today (client-side filtering)
+  // Fetch total approved amount for today
   useEffect(() => {
     const fetchTotalApprovedToday = async () => {
       try {
-        const today = format(new Date(), "dd/MM/yyyy"); // e.g., "12/09/2025"
+        const today = format(new Date(), "dd/MM/yyyy");
         const q = query(
           collection(db, "QRpayRequest"),
-          where("requestStatus", "==", "approved")
-        ); // Only status filter, no date range
+          where("requestStatus", "==", "approved"),
+          where("paymentDate", "==", today)
+        );
         const snapshot = await getDocs(q);
         const approvedToday = snapshot.docs
           .map(doc => doc.data())
-          .filter(req => req.paymentDateTime.startsWith(today))
           .reduce((sum, req) => sum + (req.amount || 0), 0);
         setTotalApprovedToday(approvedToday);
         setFetchError(null);
@@ -90,9 +91,12 @@ const QRpayRequest = () => {
             </select>
             <input
               type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="Enter User ID"
+              inputMode="tel"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
+              placeholder="Enter 10-digit Mobile Number (e.g., 9636779940)"
+              pattern="[0-9]{10}"
+              title="Please enter a 10-digit mobile number (e.g., 9636779940)"
               className="bg-light-700 border border-gray-600 text-black rounded-lg p-2 w-full md:w-1/4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
             />
             <button
@@ -100,6 +104,12 @@ const QRpayRequest = () => {
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300"
             >
               Search
+            </button>
+            <button
+              onClick={clearFilters}
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300"
+            >
+              Clear
             </button>
           </div>
           <div className="text-lg font-semibold text-white">
@@ -132,9 +142,9 @@ const QRpayRequest = () => {
             key={request.id}
             className="bg-gradient-to-r from-pink-700 to-blue-600 text-white rounded-xl shadow-lg p-6 hover:shadow-xl transition duration-300"
           >
-            <h3 className="text-lg font-semibold mb-3">User ID: {request.userId}</h3>
+            <h3 className="text-lg font-semibold mb-3">Mobile: {request.mobile || "Unknown"}</h3>
             <p className="mb-2">Amount: <span className="font-medium">₹{request.amount}</span></p>
-            <p className="mb-2">Date: <span className="font-medium">{request.paymentDateTime}</span></p>
+            <p className="mb-2">Date: <span className="font-medium">{request.paymentDate}</span></p>
             <p className="mb-2">
               Status: <span className={
                 request.requestStatus === "pending" ? "text-yellow-300" :

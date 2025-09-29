@@ -35,12 +35,12 @@ const useUserDetail = () => {
   const [isWithdrawSearched, setIsWithdrawSearched] = useState(false);
   const [isAddSearched, setIsAddSearched] = useState(false);
   const [isQRAddSearched, setIsQRAddSearched] = useState(false);
+  const [error, setError] = useState(null); // Added error state
 
   // Function to convert YYYY-MM-DD to DD MMM YYYY for bids, wins, etc.
   const formatDateToFirestore = (dateStr) => {
     if (!dateStr) return null;
     const [year, month, day] = dateStr.split('-');
-    const date = new Date(year, month - 1, day); // month is 0-indexed in JavaScript Date
     const months = [
       "Jan", "Feb", "Mar", "Apr", "May", "Jun",
       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -49,11 +49,11 @@ const useUserDetail = () => {
     return formattedDate;
   };
 
-  // Function to convert YYYY-MM-DD to DD-MM-YYYY for add requests
+  // Function to convert YYYY-MM-DD to DD/MM/YYYY for add requests
   const formatDateForAdd = (dateStr) => {
     if (!dateStr) return null;
     const [year, month, day] = dateStr.split('-');
-    return `${day}-${month}-${year}`;
+    return `${day}/${month}/${year}`;
   };
 
   // Function to convert YYYY-MM-DD to DD-MM-YYYY for withdraw requests
@@ -73,20 +73,24 @@ const useUserDetail = () => {
   // Function to extract date part from Firestore paymentDateTime for QR
   const extractDateFromPaymentDateTime = (paymentDateTime) => {
     if (!paymentDateTime) return null;
-    // Assuming paymentDateTime is in "DD/MM/YYYY HH:MM:SS" format
     const [datePart] = paymentDateTime.split(' ');
-    return datePart.trim(); // Returns "DD/MM/YYYY" and removes any extra spaces
+    return datePart.trim();
   };
 
   const fetchData = useCallback(async () => {
     try {
       const userData = await userService.getUserByMobile(mobile);
-      setUser(userData);
+      if (userData) {
+        setUser(userData);
+      } else {
+        setError("User not found for mobile: " + mobile);
+      }
 
       const gamesData = await gameService.getGames();
       setGames(gamesData);
     } catch (err) {
       console.error("Error fetching data:", err.message);
+      setError("Failed to fetch user data: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -94,9 +98,18 @@ const useUserDetail = () => {
 
   const handleSearch = async () => {
     try {
+      const userData = await userService.getUserByMobile(mobile);
+      if (!userData || !userData.uid) {
+        console.error("User UID not found for mobile:", mobile);
+        setFilteredBids([]);
+        setIsSearched(true);
+        setError("User not found for mobile: " + mobile);
+        return;
+      }
+
       const formattedDate = formatDateToFirestore(filterDate);
       const bidsData = await bidsService.getBidsByUser(
-        mobile,
+        userData.uid,
         formattedDate,
         filterGame || null,
         filterType || null
@@ -111,14 +124,25 @@ const useUserDetail = () => {
       setEditedBids(editState);
     } catch (err) {
       console.error("Error fetching bids:", err.message);
+      setFilteredBids([]);
       setIsSearched(true);
+      setError("Failed to fetch bids: " + err.message);
     }
   };
 
   const handleWinSearch = async () => {
     try {
+      const userData = await userService.getUserByMobile(mobile);
+      if (!userData || !userData.uid) {
+        console.error("User UID not found for mobile:", mobile);
+        setFilteredWinBids([]);
+        setIsWinSearched(true);
+        setError("User not found for mobile: " + mobile);
+        return;
+      }
+
       const formattedDate = formatDateToFirestore(filterWinDate);
-      const winBidsData = await bidsService.getWinBidsByUser(mobile, formattedDate);
+      const winBidsData = await bidsService.getWinBidsByUser(userData.uid, formattedDate);
       setFilteredWinBids(winBidsData);
       setIsWinSearched(true);
 
@@ -129,19 +153,28 @@ const useUserDetail = () => {
       setEditedBids(editState);
     } catch (err) {
       console.error("Error fetching winning bids:", err.message);
+      setFilteredWinBids([]);
       setIsWinSearched(true);
+      setError("Failed to fetch winning bids: " + err.message);
     }
   };
 
   const handleWithdrawSearch = async () => {
     try {
-      // Reset previous state to avoid stale data
+      const userData = await userService.getUserByMobile(mobile);
+      if (!userData || !userData.uid) {
+        console.error("User UID not found for mobile:", mobile);
+        setFilteredWithdrawRequests([]);
+        setIsWithdrawSearched(true);
+        setError("User not found for mobile: " + mobile);
+        return;
+      }
+
       setFilteredWithdrawRequests([]);
       setIsWithdrawSearched(false);
 
       const formattedFromDate = formatDateForWithdraw(filterWithdrawFromDate);
       const formattedToDate = formatDateForWithdraw(filterWithdrawToDate);
-      
 
       if (formattedFromDate && formattedToDate) {
         const fromDateObj = new Date(filterWithdrawFromDate);
@@ -152,9 +185,8 @@ const useUserDetail = () => {
         }
       }
 
-      let withdrawData = await bidsService.getWithdrawRequestsByUser(mobile, formattedFromDate, formattedToDate);
+      let withdrawData = await bidsService.getWithdrawRequestsByUser(userData.uid, formattedFromDate, formattedToDate);
 
-      // Client-side filtering to ensure exact match for requestDate
       if (formattedFromDate || formattedToDate) {
         withdrawData = withdrawData.filter((request) => {
           const requestDate = request.requestDate ? request.requestDate.trim() : null;
@@ -165,11 +197,9 @@ const useUserDetail = () => {
           if (formattedToDate) {
             include = include && requestDate <= formattedToDate;
           }
-         
           return include;
         });
       }
-
 
       setFilteredWithdrawRequests(withdrawData);
       setIsWithdrawSearched(true);
@@ -181,33 +211,36 @@ const useUserDetail = () => {
       setEditedWithdrawRequests(withdrawEditState);
     } catch (err) {
       console.error("Error fetching withdraw requests:", err.message);
-      setIsWithdrawSearched(true);
       setFilteredWithdrawRequests([]);
+      setIsWithdrawSearched(true);
+      setError("Failed to fetch withdraw requests: " + err.message);
     }
   };
 
   const handleAddSearch = async () => {
     try {
-      // Reset previous state to avoid stale data
+      const userData = await userService.getUserByMobile(mobile);
+      if (!userData || !userData.uid) {
+        console.error("User UID not found for mobile:", mobile);
+        setFilteredAddRequests([]);
+        setIsAddSearched(true);
+        setError("User not found for mobile: " + mobile);
+        return;
+      }
+
       setFilteredAddRequests([]);
       setIsAddSearched(false);
 
       const formattedDate = formatDateForAdd(filterAddDate);
 
+      let addData = await bidsService.getAddRequestsByUser(userData.uid, formattedDate);
 
-      let addData = await bidsService.getAddRequestsByUser(mobile, formattedDate);
-
-      // Client-side filtering to ensure exact match for paymentDate
       if (formattedDate) {
         addData = addData.filter((request) => {
           const paymentDate = request.paymentDate ? request.paymentDate.trim() : null;
-          const include = paymentDate === formattedDate;
-          
-          return include;
+          return paymentDate === formattedDate;
         });
       }
-
-     
 
       setFilteredAddRequests(addData);
       setIsAddSearched(true);
@@ -219,21 +252,29 @@ const useUserDetail = () => {
       setEditedAddRequests(addEditState);
     } catch (err) {
       console.error("Error fetching add fund requests:", err.message);
-      setIsAddSearched(true);
       setFilteredAddRequests([]);
+      setIsAddSearched(true);
+      setError("Failed to fetch add fund requests: " + err.message);
     }
   };
 
   const handleQRAddSearch = async () => {
     try {
-      // Reset previous state to avoid stale data
+      const userData = await userService.getUserByMobile(mobile);
+      if (!userData || !userData.uid) {
+        console.error("User UID not found for mobile:", mobile);
+        setFilteredQRAddRequests([]);
+        setIsQRAddSearched(true);
+        setError("User not found for mobile: " + mobile);
+        return;
+      }
+
       setFilteredQRAddRequests([]);
       setIsQRAddSearched(false);
 
       const formattedDate = formatDateForQR(filterQRAddDate);
-      let qrAddData = await bidsService.getQRAddRequestsByUser(mobile, formattedDate);
+      let qrAddData = await bidsService.getQRAddRequestsByUser(userData.uid, formattedDate);
 
-      // Client-side filtering to match only date part
       if (formattedDate) {
         qrAddData = qrAddData.filter((request) => {
           const requestDate = extractDateFromPaymentDateTime(request.paymentDateTime);
@@ -251,8 +292,9 @@ const useUserDetail = () => {
       setEditedQRAddRequests(qrAddEditState);
     } catch (err) {
       console.error("Error fetching QR add fund requests:", err.message);
-      setIsQRAddSearched(true);
       setFilteredQRAddRequests([]);
+      setIsQRAddSearched(true);
+      setError("Failed to fetch QR add fund requests: " + err.message);
     }
   };
 
@@ -272,6 +314,16 @@ const useUserDetail = () => {
           delete updatedBid.docId;
           delete updatedBid.id;
           delete updatedBid.userId;
+
+          // Convert specific fields to number for bids and wins
+          if (updatedBid.bidAmount) updatedBid.bidAmount = Number(updatedBid.bidAmount);
+          if (updatedBid.bidDigit) updatedBid.bidDigit = Number(updatedBid.bidDigit);
+          if (updatedBid.closePana) updatedBid.closePana = Number(updatedBid.closePana);
+          if (updatedBid.openPana) updatedBid.openPana = Number(updatedBid.openPana);
+          if (updatedBid.panaDigit) updatedBid.panaDigit = Number(updatedBid.panaDigit);
+          if (updatedBid.singleDigit) updatedBid.singleDigit = Number(updatedBid.singleDigit);
+          if (updatedBid.payoutAmount) updatedBid.payoutAmount = Number(updatedBid.payoutAmount);
+
           await bidsService.updateBid(docId, updatedBid);
           setEditingBidId(null);
           await handleSearch();
@@ -308,6 +360,10 @@ const useUserDetail = () => {
           const updatedRequest = { ...editedWithdrawRequests[docId] };
           delete updatedRequest.docId;
           delete updatedRequest.userId;
+
+          // Convert amount to number for withdraw
+          if (updatedRequest.amount) updatedRequest.amount = Number(updatedRequest.amount);
+
           await bidsService.updateWithdrawRequest(docId, updatedRequest);
           setEditingWithdrawRequestId(null);
           await handleWithdrawSearch();
@@ -342,6 +398,10 @@ const useUserDetail = () => {
           const updatedRequest = { ...editedAddRequests[docId] };
           delete updatedRequest.docId;
           delete updatedRequest.userId;
+
+          // Convert amount to number for add fund
+          if (updatedRequest.amount) updatedRequest.amount = Number(updatedRequest.amount);
+
           await bidsService.updateAddRequest(docId, updatedRequest);
           setEditingAddRequestId(null);
           await handleAddSearch();
@@ -376,6 +436,10 @@ const useUserDetail = () => {
           const updatedRequest = { ...editedQRAddRequests[docId] };
           delete updatedRequest.docId;
           delete updatedRequest.userId;
+
+          // Convert amount to number for QR add fund
+          if (updatedRequest.amount) updatedRequest.amount = Number(updatedRequest.amount);
+
           await bidsService.updateQRAddRequest(docId, updatedRequest);
           setEditingQRAddRequestId(null);
           await handleQRAddSearch();
@@ -572,6 +636,7 @@ const useUserDetail = () => {
     deleteAddRequest,
     deleteQRAddRequest,
     loading,
+    error, // Added error to return
     isSearched,
     isWinSearched,
     isWithdrawSearched,

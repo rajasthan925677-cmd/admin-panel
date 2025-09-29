@@ -13,6 +13,7 @@ import QRpayRequest from "./DashboardUI/QRpayRequest";
 import AddFundRequests from "./DashboardUI/AddFundRequests";
 import WithdrawRequests from "./DashboardUI/WithdrawRequests";
 import DownloadUsers from "./DashboardUI/DownloadUsers";
+import ResetUserPassword from "./components/ResetUserPassword"; // ✅ Import ResetUserPassword page
 
 // Simple auth check (can be replaced by context or state management)
 const PrivateRoute = ({ children }) => {
@@ -133,6 +134,16 @@ const AppRouter = () => {
           element={
             <PrivateRoute>
               <WithdrawRequests />
+            </PrivateRoute>
+          }
+        />
+
+        {/* ✅ Protected Reset User Password page */}
+        <Route
+          path="/reset-user-password"
+          element={
+            <PrivateRoute>
+              <ResetUserPassword />
             </PrivateRoute>
           }
         />

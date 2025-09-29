@@ -8,22 +8,38 @@ import {
 const useQRpayRequest = () => {
   const [date, setDate] = useState(null);
   const [status, setStatus] = useState("all");
-  const [userId, setUserId] = useState("");
+  const [mobile, setMobile] = useState("");
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const normalizeMobile = (input) => {
+    // Remove country code (+91), spaces, dashes, or other non-digits
+    return input.replace(/^\+91|\D/g, "");
+  };
 
   const handleSearch = async () => {
     setLoading(true);
     setError(null);
     try {
-      const fetchedRequests = await fetchQRPayRequests(date, status, userId);
+      const normalizedMobile = normalizeMobile(mobile);
+     // console.log("Search parameters:", { date: date ? date.toISOString() : null, status, mobile, normalizedMobile });
+      const fetchedRequests = await fetchQRPayRequests(date, status, normalizedMobile);
+     // console.log("Fetched requests:", fetchedRequests.map(r => ({ id: r.id, mobile: r.mobile, paymentDate: r.paymentDate })));
       setRequests(fetchedRequests);
     } catch (err) {
+      console.error("fetchQRPayRequests error:", err);
       setError("Failed to fetch requests: " + err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const clearFilters = () => {
+    setDate(null);
+    setStatus("all");
+    setMobile("");
+    setRequests([]);
   };
 
   const handleAccept = async (requestId, amount, userId) => {
@@ -64,14 +80,15 @@ const useQRpayRequest = () => {
     setDate,
     status,
     setStatus,
-    userId,
-    setUserId,
+    mobile,
+    setMobile,
     requests,
     loading,
     error,
     handleSearch,
     handleAccept,
     handleReject,
+    clearFilters,
   };
 };
 
